@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#030813">
+  <meta name="description" content="用双手探索粒子圣诞树与五个礼盒世界。">
+  <title>圣诞 · 粒子空间</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #030813;
+      color: #fff;
+    }
+    canvas {
+      display: block;
+      touch-action: none;
+    }
+    button {
+      position: fixed;
+      left: 50%;
+      bottom: 8%;
+      transform: translateX(-50%);
+      min-height: 48px;
+      padding: 14px 24px;
+      border: 1px solid #cbb482;
+      border-radius: 5px;
+      background: #172439;
+      color: #ffe5ab;
+      font: 17px system-ui, sans-serif;
+      cursor: pointer;
+    }
+    button:focus-visible {
+      outline: 2px solid #fff2cd;
+      outline-offset: 4px;
+    }
+    button:disabled {
+      cursor: wait;
+      opacity: .75;
+    }
+    #zoom-lock {
+      left: auto;
+      right: max(8%, env(safe-area-inset-right));
+      bottom: max(14%, env(safe-area-inset-bottom));
+      transform: none;
+      width: 60px;
+      height: 60px;
+      padding: 0;
+      border-radius: 50%;
+      background: #101c2de8;
+      color: #ffe5ab;
+    }
+    #zoom-lock svg { display: block; margin: auto; }
+    #zoom-lock .closed-shackle,
+    #zoom-lock[aria-pressed="true"] .open-shackle { display: none; }
+    #zoom-lock[aria-pressed="true"] .closed-shackle { display: inline; }
+    #zoom-lock[aria-pressed="true"] { background: #ffe5ab; color: #101c2d; }
+    #zoom-lock:hover,
+    #zoom-lock[data-hand-hover] { box-shadow: 0 0 0 4px #ffe5ab55, 0 0 22px #ffe5ab55; }
+    #error {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      max-width: calc(100% - 40px);
+      font: 14px system-ui, sans-serif;
+    }
+    video { display: none; }
+    [hidden] { display: none; }
+  </style>
+</head>
+<body>
+  <button id="start" type="button">开启摄像头</button>
+  <button id="zoom-lock" type="button" aria-label="锁定缩放" aria-pressed="false" hidden>
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path class="open-shackle" d="M8 11V7a4 4 0 0 1 8 0"/>
+      <path class="closed-shackle" d="M8 11V7a4 4 0 0 1 8 0v4"/>
+      <rect x="5" y="11" width="14" height="10" rx="2"/>
+      <path d="M12 15v2"/>
+    </svg>
+  </button>
+  <p id="error" role="status"></p>
+  <video muted playsinline></video>
+  <script type="module" src="./immersive.js?v=double-pinch-return"></script>
+</body>
+</html>
