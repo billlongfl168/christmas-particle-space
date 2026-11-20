@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080c14">
+<title>蓝玫瑰</title>
+<style>
+  :root { color-scheme: dark; font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; background: #080c14; color: #e4eaf2; }
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .stage { position: relative; display: grid; grid-template-rows: auto 1fr auto; min-height: 420px; height: 100svh; isolation: isolate; overflow: hidden; background: radial-gradient(ellipse at 52% 46%, #141e2a 0%, #0b111b 41%, #080c14 78%); }
+  canvas { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; outline: none; }
+  canvas:active { cursor: grabbing; }
+  canvas:focus-visible { outline: 1px solid #778fa9; outline-offset: -4px; }
+  .header, .footer { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 16px; pointer-events: none; }
+  .header { padding: max(25px, env(safe-area-inset-top)) clamp(18px, 5vw, 72px) 0; }
+  .footer { grid-row: 3; padding: 0 clamp(18px, 5vw, 72px) max(26px, env(safe-area-inset-bottom)); }
+  h1 { margin: 0; display: flex; align-items: center; gap: 13px; font-size: 17px; font-weight: 500; letter-spacing: .19em; }
+  .mark { width: 7px; height: 7px; border: 1px solid #9cb8d3; transform: rotate(45deg); box-shadow: 0 0 11px #8cbae456; }
+  button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 0 13px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: #adbacc; font: inherit; font-size: 12px; white-space: nowrap; cursor: pointer; pointer-events: auto; }
+  button:disabled { opacity: .36; cursor: default; }
+  button:not(:disabled):hover { background: #9fb7d215; color: #eff6ff; }
+  button:focus-visible { outline: 2px solid #a0c0e0; outline-offset: 2px; }
+  button[aria-pressed="true"] { background: #91aed118; border-color: #b1c9e522; color: #eef5ff; }
+  .glass { display: inline-flex; align-items: center; gap: 3px; padding: 4px; border: 1px solid #9fb7d21b; border-radius: 999px; background: #0c131ec4; }
+  .single { background: #0c131ec4; border-color: #9fb7d235; padding: 0 16px; }
+  .single svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.25; }
+  .utility { display: flex; align-items: center; gap: 5px; }
+  .icon { font-size: 16px; width: 39px; min-height: 38px; padding: 0; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  [hidden] { display: none !important; }
+  .error { position: absolute; z-index: 2; inset: 35% 10% auto; margin: auto; text-align: center; color: #d7e3f2; line-height: 1.8; }
+  .error button { margin-top: 12px; }
+  @media (max-width: 620px) {
+    .header { padding-top: max(18px, env(safe-area-inset-top)); }
+    .footer { flex-wrap: wrap; justify-content: center; gap: 8px; padding-bottom: max(15px, env(safe-area-inset-bottom)); }
+    .utility { justify-content: center; }
+    button { min-height: 38px; padding: 0 11px; }
+    .icon { width: 36px; }
+    h1 { font-size: 15px; }
+  }
+  /* The artwork is the visual identity; controls form a single quiet rail. */
+  :root { --ink: #d9e8f6; --muted: #a4b7cb; --line: #9cb8d324; }
+  h1 { font-family: "Songti SC", "STSong", serif; font-size: 18px; letter-spacing: .08em; color: var(--ink); font-weight: 400; }
+  .footer { justify-self: center; margin-bottom: max(20px, env(safe-area-inset-bottom)); padding: 7px 10px; gap: 14px; border: 1px solid var(--line); border-radius: 16px; background: #09111bb8; backdrop-filter: blur(16px); }
+  .footer .glass { border: 0; background: transparent; padding: 0; border-radius: 0; }
+  .footer .utility { border-left: 1px solid var(--line); padding-left: 12px; gap: 8px; }
+  button { min-height: 44px; color: var(--muted); transition: color 160ms ease, background 160ms ease; }
+  .icon { width: 44px; min-height: 44px; }
+  button:active { background: #a8cbe822; }
+  button[aria-pressed="true"] { background: #91aed116; border-color: transparent; color: var(--ink); }
+  @media(max-width: 620px) {
+    .footer { width: calc(100% - 24px); gap: 3px; padding: 6px; margin-bottom: max(12px, env(safe-area-inset-bottom)); }
+    .footer .utility { border-left: 0; padding-left: 0; width: 100%; justify-content: center; gap: 3px; }
+    button { min-height: 44px; padding: 0 10px; }
+    .icon { width: 44px; }
+  }
+  @media(prefers-reduced-motion: reduce) { button { transition: none; } }
+</style>
+</head>
+<body>
+<main class="stage">
+  <canvas id="art" tabindex="0" aria-label="三维蓝玫瑰，拖动或按方向键旋转，滚轮、双指或加减键缩放" aria-describedby="interaction"></canvas>
+  <span class="sr-only" id="interaction">用下方按钮切换花瓣形态与观察角度。</span>
+  <header class="header">
+    <h1>蓝玫瑰</h1>
+    <button class="single" id="sample" type="button" aria-pressed="false">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7"/><path d="M4.1 12.5c4 .8 8.7-2.5 9.9-7.6"/></svg>
+      <span>粒子近景</span>
+    </button>
+  </header>
+  <footer class="footer">
+    <div id="states" class="glass" role="group" aria-label="玫瑰形态">
+      <button type="button" data-bloom="0" aria-pressed="false">初绽</button>
+      <button type="button" data-bloom="0.60" aria-pressed="true">半开</button>
+      <button type="button" data-bloom="1" aria-pressed="false">盛开</button>
+    </div>
+    <div class="utility">
+      <button type="button" id="motion" aria-pressed="false">暂停流光</button>
+      <div id="views" class="glass" role="group" aria-label="观察角度">
+        <button type="button" data-view="face" aria-pressed="false">正面</button>
+        <button type="button" data-view="angle" aria-pressed="true">斜侧</button>
+        <button type="button" data-view="side" aria-pressed="false">侧面</button>
+      </div>
+      <div class="glass" role="group" aria-label="缩放">
+        <button class="icon" type="button" id="zoom-out" aria-label="缩小">−</button>
+        <button class="icon" type="button" id="zoom-in" aria-label="放大">＋</button>
+      </div>
+    </div>
+  </footer>
+  <div class="error" id="error" role="status" hidden>
+    <div id="error-text"></div>
+    <button class="single" type="button" id="retry">重新加载</button>
+  </div>
+</main>
+<script>
+'use strict';
+
+const canvas = document.querySelector('#art');
+const sampleButton = document.querySelector('#sample');
+const viewButtons = [...document.querySelectorAll('[data-view]')];
+const bloomButtons = [...document.querySelectorAll('[data-bloom]')];
+const clamp = (value, low, high) => Math.min(high, Math.max(low, value));
+const mix = (a, b, t) => a + (b - a) * t;
+const smooth = (a, b, value) => {
+  const t = clamp((value - a) / (b - a), 0, 1);
+  return t * t * (3 - 2 * t);
+};
+const TAU = 2 * Math.PI;
+const subtract = (a, b) => a.map((value, index) => value - b[index]);
+const cross = ([ax, ay, az], [bx, by, bz]) => [ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx];
+const normalize = vector => {
+  const length = Math.hypot(...vector) || 1;
+  return vector.map(value => value / length);
+};
+const dot = (a, b) => a.reduce((sum, value, index) => sum + value * b[index], 0);
+
+function seededRandom(seed) {
+  return () => {
+    seed = (Math.imul(1664525, seed) + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+}
+
+const layers = [
+  { count: 5, phase: .04, width: 1.01, delay: .01, closed: [[.23,-.75],[.91,-.59],[1.09,.53],[.33,1.12]], open: [[.25,-.76],[1.10,-.91],[1.61,.85],[1.91,.24]] },
+  { count: 5, phase: .63, width: .85, delay: .13, closed: [[.19,-.60],[.77,-.43],[.93,.61],[.29,1.17]], open: [[.18,-.62],[.86,-.70],[1.18,1.16],[1.48,.62]] },
+  { count: 5, phase: .12, width: .63, delay: .25, closed: [[.12,-.39],[.61,-.34],[.73,.70],[.24,1.18]], open: [[.13,-.43],[.64,-.40],[.79,1.35],[1.05,.84]] },
+  { count: 5, phase: .63, width: .43, delay: .39, closed: [[.08,-.12],[.41,.00],[.52,.73],[.19,1.23]], open: [[.09,-.18],[.44,.05],[.56,1.39],[.70,1.04]] },
+  { count: 4, phase: .28, width: .28, delay: .52, closed: [[.06,.10],[.24,.21],[.34,.85],[.13,1.24]], open: [[.05,.07],[.29,.30],[.39,1.42],[.29,1.17]] },
+  { count: 3, phase: .89, width: .19, delay: .64, closed: [[.01,.31],[.15,.43],[.21,.89],[.075,1.23]], open: [[.01,.30],[.16,.44],[.24,1.42],[.055,1.27]] },
+];
+const petalRandom = seededRandom(17246);
+const petals = layers.flatMap((layer, layerIndex) => Array.from({length: layer.count}, (_, index) => ({
+  layer, layerIndex, angle: (index + layer.phase) * TAU / layer.count + (petalRandom() - .5) * .21,
+  width: .89 + petalRandom() * .24, height: .91 + petalRandom() * .17,
+  reach: .91 + petalRandom() * .19, curl: .79 + petalRandom() * .39,
+  skew: (petalRandom() - .47) * .20, grain: petalRandom() * TAU,
+  tint: .91 + petalRandom() * .19, seed: (layerIndex + 1) * 787 + index * 311
+})));
+
+function bezier(values, t) {
+  const s = 1 - t;
+  return s ** 3 * values[0] + 3 * s * s * t * values[1] + 3 * s * t * t * values[2] + t ** 3 * values[3];
+}
+
+function petalSurface(petal, bloom) {
+  const {layer, layerIndex, angle, width, height, reach, curl, skew, grain} = petal;
+  const openness = smooth(layer.delay, 1, mix(.53,.76,bloom));
+  const control = layer.closed.map((point, i) => point.map((value, j) => mix(value, layer.open[i][j], openness)));
+  const radius = control.map(point => point[0] * reach);
+  const rise = control.map(point => point[1] * height);
+  const halfWidth = layer.width * width * mix(.55 + skew * .22, 1, openness);
+  return (u, v) => {
+    const t = v * 2 - 1;
+    const side = Math.abs(t);
+    const lip = u ** 6;
+    const closedTip = 1 - openness;
+    const fan = Math.sin(u * Math.PI / 2) ** .81;
+    const scallop = Math.sin(t * 3.4 + grain) * .55 + Math.sin(t * 6.1 - grain) * .12;
+    const asymmetry = t * skew * u;
+    const forward = bezier(radius, u)
+      - halfWidth * (.36 + .17 * curl) * side ** 2 * fan
+      + lip * halfWidth * mix(-.035, .27, openness) * curl
+      + scallop * lip * halfWidth * .085
+      + closedTip * halfWidth * skew * (1 + t) * lip;
+    const up = bezier(rise, u)
+      - halfWidth * side ** 1.6 * lip * mix(.32, .31, openness)
+      + halfWidth * side ** 3 * u ** 2 * curl * .24
+      + (scallop * .13 + asymmetry*2.0) * halfWidth * u ** 4;
+    const across = halfWidth * t * (.055 * (1 - u) + fan * (1 - .12 * u ** 6))
+      + halfWidth * asymmetry * t;
+    const twist = angle + (1 - u) * (.16 + layerIndex * .043) + u*u * (.26 + layerIndex*.10 + skew*.65) * mix(.35,1,openness);
+    return [Math.cos(twist) * forward - Math.sin(twist) * across, up + 1.36, Math.sin(twist) * forward + Math.cos(twist) * across];
+  };
+}
+
+function petalNormal(surface, u, v) {
+  const step = .001;
+  const du = subtract(surface(Math.min(1, u + step), v), surface(Math.max(0, u - step), v));
+  const dv = subtract(surface(u, Math.min(1, v + step)), surface(u, Math.max(0, v - step)));
+  return normalize(cross(du, dv));
+}
+
+const grainLayout = [3, 3, 3, 3];
+const grainStride = grainLayout.reduce((sum, size) => sum + size, 0);
+const depthBins = 256;
+
+function stemCenter(t) {
+  return [.12*Math.sin(t*4.1)-.08, -2.75+t*3.47, .10*Math.sin(t*3.2)];
+}
+
+function botanicalSurfaces() {
+  const stem = (u,v) => {
+    const p=stemCenter(u), angle=v*TAU;
+    const radius=mix(.030,.055,u);
+    return [p[0]+radius*Math.cos(angle),p[1],p[2]+radius*Math.sin(angle)];
+  };
+  const parts=[{surface:stem,count:1800,tone:[.20,.37,.59],stem:true}];
+  const leaves=[
+    {height:.39,angle:3.65,length:1.36,width:.38,lift:.48},
+    {height:.64,angle:.65,length:1.12,width:.32,lift:.36},
+    {height:.22,angle:.40,length:.81,width:.23,lift:.33}
+  ];
+  for(const leaf of leaves) {
+    const root=stemCenter(leaf.height);
+    const surface=(u,v)=>{
+      const t=v*2-1;
+      const blade=smooth(.08,.23,u);
+      const edge=1+.035*Math.sin(u*92);
+      const halfWidth=leaf.width*Math.pow(Math.sin(Math.PI*u),.90)*blade*edge;
+      const length=u*leaf.length;
+      const across=halfWidth*t;
+      const rise=leaf.lift*u+.19*Math.sin(u*Math.PI)-.14*t*t*Math.sin(u*Math.PI);
+      return [
+        root[0]+Math.cos(leaf.angle)*length-Math.sin(leaf.angle)*across,
+        root[1]+rise+across*.65,
+        root[2]+Math.sin(leaf.angle)*length+Math.cos(leaf.angle)*across
+      ];
+    };
+    parts.push({surface,count:950,tone:[.26,.43,.67],leaf:true});
+  }
+  for(let index=0;index<5;index++) {
+    const angle=index*TAU/5+.2;
+    const surface=(u,v)=>{
+      const width=.13*Math.sin(Math.PI*u)*(v*2-1);
+      const radius=.075+.62*u;
+      return [Math.cos(angle)*radius-Math.sin(angle)*width,
+        .54+.19*Math.sin(Math.PI*u)-.16*u,
+        Math.sin(angle)*radius+Math.cos(angle)*width];
+    };
+    parts.push({surface,count:180,tone:[.17,.31,.52]});
+  }
+  return parts;
+}
+const plantParts=botanicalSurfaces();
+
+function appendPlantGrains(grains) {
+  const random=seededRandom(612231);
+  for(const part of plantParts) {
+    for(let index=0;index<part.count;index++) {
+      const u=(index+random())/part.count;
+      const v=random();
+      const point=part.surface(u,v);
+      const normal=petalNormal(part.surface,u,v);
+      const depth=(random()-.5)*.018;
+      const vein=part.leaf ? Math.exp(-Math.pow((v-.5)/.035,2)) : 0;
+      const tone=.68+random()*.48+vein*.45;
+      grains.push(...point.map((value,axis)=>value+normal[axis]*depth),
+        ...normal,...part.tone.map(channel=>channel*tone),
+        .003+random()*.003,.55+random()*.30,u*.35);
+    }
+  }
+}
+
+function appendPlantConnections(vertices) {
+  for(const part of plantParts) {
+    const rows=part.stem?56:32, columns=part.stem?12:14;
+    const vertex=(row,column)=>{
+      const u=row/rows,v=column/columns;
+      return [...part.surface(u,v),...petalNormal(part.surface,u,v),
+        ...part.tone,u,v,-10];
+    };
+    for(let row=0;row<rows;row++) {
+      for(let column=0;column<columns;column++) {
+        for(const [r,c] of [[row,column],[row+1,column],[row,column+1],
+          [row,column+1],[row+1,column],[row+1,column+1]]) vertices.push(...vertex(r,c));
+      }
+    }
+  }
+}
+
+function makeRose(bloom) {
+  const grains = [];
+  const colors = [
+    [.275,.446,.645], [.277,.453,.658], [.301,.492,.695],
+    [.337,.524,.729], [.383,.576,.760], [.420,.616,.794]
+  ];
+  const thickness = [.112, .103, .087, .071, .049, .033];
+  const counts = [2850, 2550, 2130, 1635, 1110, 765];
+
+  for (const petal of petals) {
+    const {layerIndex, grain, tint, seed} = petal;
+    const surface = petalSurface(petal, bloom);
+    const random = seededRandom(seed);
+    const samples = counts[layerIndex];
+
+    for (let i = 0; i < samples; i++) {
+      // Each grain keeps its petal coordinates and its depth through the petal.
+      const length = ((i + random()) / samples) ** .68;
+      const onFold = random() < .23;
+      const u = onFold ? mix(.81,.99,length) : length;
+      const v = random();
+      const depth = random() * 2 - 1;
+      const middle = surface(u, v);
+      const normal = petalNormal(surface, u, v);
+      const span = 1 - Math.abs(2 * v - 1);
+      const belly = smooth(.06,.55,u) * (1 - .56 * smooth(.74,1,u));
+      const fold = smooth(.79,.99,u) * (.65 + .35 * Math.sin(grain + v*8));
+      const halfThickness = thickness[layerIndex] *
+        (.12 + .80 * belly * Math.sqrt(span) + .42 * fold);
+      const side = depth < 0 ? -1 : 1;
+      const depthFromCenter = Math.abs(depth);
+      const size = mix(.0022, .0098, random() ** 2.3);
+      const accent = random();
+      const patches = .57 * Math.sin(grain + v*19 + u*8) + .43 * Math.sin(grain - v*33 + u*16);
+      const foldLight = smooth(.71,.99,u) * smooth(-.38,.87,patches);
+      const opacity = mix(.34,.80,depthFromCenter ** .8) * mix(.82,1.04,random());
+      const rootShade = mix(.52,1,smooth(.14,.67,u));
+      const tone = rootShade * mix(.70,1.12,random()) *
+        (mix(.69,1.11,depthFromCenter) + .49 * foldLight) * tint;
+      const base = colors[layerIndex];
+      const ice = smooth(.74,1,accent) * (.064 + .39 * foldLight) * smooth(.15,.63,u);
+      grains.push(
+        ...middle.map((value, axis) => value + normal[axis] * depth * halfThickness),
+        ...normal.map(value => value * side),
+        base[0] * tone + ice * .72,
+        base[1] * tone + ice,
+        base[2] * tone + ice * 1.06,
+        size, opacity, u
+      );
+    }
+  }
+  appendPlantGrains(grains);
+  // Sparse, continuously renewed dust; source particles remain intact.
+  const dustRandom=seededRandom(7721);
+  const sourceCount=grains.length/12;
+  for(let i=0;i<5500;i++) {
+    const index=Math.floor(dustRandom()*sourceCount)*12;
+    grains.push(...grains.slice(index,index+3),...grains.slice(index+3,index+6),
+      .36,.57,.82,.004+dustRandom()*.004,.23+dustRandom()*.25,-2);
+  }
+  return new Float32Array(grains);
+}
+
+function orderGrains(geometry, view) {
+  if (!geometry.needsOrder && geometry.axis.every((value, i) => value === view[i*4+2])) return;
+  const {data, bins, counts, order, axis} = geometry;
+  axis.set([view[2],view[6],view[10]]);
+  counts.fill(0);
+  for (let i = 0; i < geometry.count; i++) {
+    const offset = i * grainStride;
+    const depth = data[offset]*axis[0] + data[offset+1]*axis[1] + data[offset+2]*axis[2];
+    const bin = clamp(Math.floor((depth + 3) / 6 * depthBins),0,depthBins-1);
+    bins[i] = bin;
+    counts[bin]++;
+  }
+  let offset = 0;
+  for (let bin = 0; bin < depthBins; bin++) {
+    const count = counts[bin];
+    counts[bin] = offset;
+    offset += count;
+  }
+  for (let i = 0; i < geometry.count; i++) order[counts[bins[i]]++] = i;
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, geometry.indexBuffer);
+  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, order, gl.DYNAMIC_DRAW);
+  geometry.needsOrder = false;
+}
+
+function makeConnections(bloom) {
+  const vertices = [];
+  for (const petal of petals) {
+    const surface = petalSurface(petal,bloom);
+    const rows = 30, columns = 24;
+    const grid = [];
+    for (let row=0; row<=rows; row++) {
+      for (let column=0; column<=columns; column++) {
+        const u=row/rows, v=column/columns;
+        grid.push([...surface(u,v),...petalNormal(surface,u,v),.12,.24,.39,u,v,petal.grain]);
+      }
+    }
+    for (let row=0; row<rows; row++) {
+      for (let column=0; column<columns; column++) {
+        const a=row*(columns+1)+column, b=a+columns+1;
+        for (const index of [a,b,a+1,a+1,b,b+1]) vertices.push(...grid[index]);
+      }
+    }
+  }
+  appendPlantConnections(vertices);
+  return new Float32Array(vertices);
+}
+
+function makeSphere() {
+  const result = [];
+  const longitudes = 80;
+  const latitudes = 48;
+  const vertex = (x, y) => {
+    const azimuth = x / longitudes * TAU;
+    const elevation = y / latitudes * Math.PI;
+    return [Math.cos(azimuth) * Math.sin(elevation), Math.cos(elevation), Math.sin(azimuth) * Math.sin(elevation)];
+  };
+  for (let y = 0; y < latitudes; y++) {
+    for (let x = 0; x < longitudes; x++) {
+      result.push(...vertex(x,y), ...vertex(x,y+1), ...vertex(x+1,y), ...vertex(x+1,y), ...vertex(x,y+1), ...vertex(x+1,y+1));
+    }
+  }
+  return new Float32Array(result);
+}
+
+const GLSL = '#version 300 es\nprecision highp float;\n';
+const backdropVertex = GLSL + `
+void main() {
+  vec2 p = vec2(float((gl_VertexID << 1) & 2), float(gl_VertexID & 2));
+  gl_Position = vec4(p * 2.0 - 1.0, 0.0, 1.0);
+}`;
+const backdropFragment = GLSL + `
+uniform vec2 uResolution;
+uniform vec2 uOrbit;
+uniform float uTime;
+uniform float uSample;
+uniform float uSampleRadius;
+out vec4 color;
+
+float hash(vec2 p) {
+  return fract(sin(dot(p,vec2(121.7,317.3))) * 43758.54);
+}
+float noise(vec2 p) {
+  vec2 a=floor(p), b=fract(p); b=b*b*(3.0-2.0*b);
+  return mix(mix(hash(a),hash(a+vec2(1,0)),b.x),mix(hash(a+vec2(0,1)),hash(a+vec2(1,1)),b.x),b.y);
+}
+float mist(vec2 p) {
+  return .57*noise(p)+.28*noise(p*2.03+13.0)+.15*noise(p*4.09+31.0);
+}
+float field(vec2 p, float chance, float size) {
+  vec2 cell = floor(p);
+  vec2 f = fract(p);
+  float h = hash(cell);
+  vec2 star = .18 + .64 * vec2(hash(cell + 11.23), hash(cell + 74.1));
+  float d = length(f-star);
+  return step(chance,h) * (exp(-d*d/size) + .21*exp(-d*d/(size*5.5))) * (.35 + .65 * h);
+}
+void main() {
+  vec2 uv = gl_FragCoord.xy / uResolution;
+  vec2 screen = (gl_FragCoord.xy - vec2(uResolution.x*.5, uResolution.y*.53)) / uResolution.y;
+  float haze = exp(-dot(screen*vec2(1.20,1.78),screen*vec2(1.20,1.78))*3.1);
+  float haze2 = exp(-length((screen-vec2(-.15,.1))*vec2(1.55,3.7))*3.4);
+  vec3 bg = vec3(.012,.021,.037) + haze*vec3(.012,.021,.033) + haze2*vec3(.005,.008,.012);
+  float cloud=mist(screen*3.0+vec2(uTime*.002,-uTime*.001));
+  bg += vec3(.018,.032,.052)*cloud*haze;
+  bg += vec3(.005,.009,.016)*mist(screen*7.0+cloud)*haze2;
+  vec2 drift = vec2(uTime*.002, uTime*.001);
+  vec2 framing = screen + vec2(.12,.12);
+  float farStars = field(framing*43.37 + uOrbit*.022 + drift, .975, .00024);
+  float nearStars = field(framing*21.83 + uOrbit*.063 + drift*1.7, .983, .00065);
+  bg += (farStars*.12 + nearStars*.22)*vec3(.54,.65,.77);
+  float ring = length(screen) / max(.001,uSampleRadius);
+  float halo = exp(-abs(ring-1.0)*17.0) * step(1.0,ring);
+  float softHalo = exp(-max(ring-1.0,0.0)*6.0) * step(1.0,ring);
+  bg += uSample * (halo*.075+softHalo*.034) * vec3(.42,.67,1.0);
+  bg += (hash(gl_FragCoord.xy) - .5) * .002;
+  color = vec4(bg,1.0);
+}`;
+const roseVertex = GLSL + `
+layout(location=0) in vec3 aPosition;
+layout(location=1) in vec3 aNormal;
+layout(location=2) in vec3 aColor;
+layout(location=3) in vec3 aDetail;
+uniform mat4 uView;
+uniform mat4 uProjection;
+uniform float uFocal;
+uniform float uMinPoint;
+uniform float uMaxPoint;
+uniform float uTime;
+out vec3 vWorld;
+out vec3 vNormal;
+out vec3 vColor;
+out vec3 vDetail;
+out vec3 vViewPosition;
+void main() {
+  vec3 position=aPosition;
+  float fade=1.0;
+  if(aDetail.z < -1.0 && aDetail.z > -3.0) {
+    float seed=fract(sin(dot(aPosition,vec3(17.1,91.7,46.3)))*43758.54);
+    float age=fract(seed+uTime*(.035+seed*.025));
+    vec3 direction=normalize(vec3(position.x, .25+seed*.45, position.z)+aNormal*.45);
+    position+=direction*age*(.32+seed*.80);
+    position+=vec3(sin(age*5.0+seed*31.0),age*.8,cos(age*4.0+seed*17.0))*age*.18;
+    fade=smoothstep(0.0,.17,age)*(1.0-smoothstep(.50,1.0,age));
+  }
+  vec4 view = uView * vec4(position,1.0);
+  gl_Position = uProjection * view;
+  gl_PointSize = clamp(aDetail.x * 2.65 * uFocal / -view.z,uMinPoint,uMaxPoint);
+  vWorld = aPosition;
+  vNormal = mat3(uView)*aNormal;
+  vColor = aColor;
+  vDetail = vec3(aDetail.x,aDetail.y*fade,aDetail.z);
+  vViewPosition = view.xyz;
+}`;
+const grainFragment = GLSL + `
+uniform float uTime;
+in vec3 vWorld;
+in vec3 vNormal;
+in vec3 vColor;
+in vec3 vDetail;
+in vec3 vViewPosition;
+out vec4 color;
+void main() {
+  vec2 xy = (gl_PointCoord - .5) * vec2(2.65,-2.65);
+  float r = length(xy);
+  if (r > 1.32) discard;
+  vec3 sphere = vec3(xy,sqrt(max(0.0,1.0-r*r)));
+  vec3 light = normalize(vec3(-.51,.73,.46));
+  vec3 fill = normalize(vec3(.66,-.23,.38));
+  vec3 normal = normalize(vNormal);
+  vec3 eye = normalize(-vViewPosition);
+  float litSide = max(dot(normal,light),0.0);
+  float softFill = max(dot(normal,fill),0.0);
+  float nearSide = smoothstep(-.65,.35,dot(normal,eye));
+  float shape = max(dot(sphere,light),0.0);
+  float spec = pow(max(dot(sphere,normalize(light+vec3(0,0,1))),0.0),29.0);
+  float solid = 1.0 - smoothstep(.55,1.08,r);
+  float glow = (1.0 - smoothstep(.90,1.32,r))*.14;
+  float wave = pow(.5+.5*sin(vDetail.z*7.5+atan(vWorld.z,vWorld.x)*.8-uTime*.75),16.0);
+  float exposure = .16 + .83 * litSide + .12 * softFill + .19 * nearSide;
+  float selection = fract(sin(dot(vWorld,vec3(129.7,81.2,34.5)))*43758.54);
+  float jewel = smoothstep(.94,.999,selection);
+  float fold = smoothstep(.78,.98,vDetail.z);
+  float center = 1.0-smoothstep(.20,.95,length(vWorld.xz));
+  float band = fold*(.55+.45*litSide);
+  exposure *= .78 + jewel*.65 + wave*.38 + band*.55 + center*.23;
+  float grainLight = mix(.20,1.48,shape);
+  vec3 lit = vColor * exposure * grainLight + vec3(.38,.61,.82)*spec*(.18+jewel*.45) + vec3(.18,.40,.60)*wave*(.24+jewel);
+  lit += vec3(.10,.225,.31)*band*(.55+.45*wave);
+  lit = min(lit,vec3(.85,.95,1.0));
+  if(vDetail.z < -1.0) {
+    color=vec4(vColor,exp(-r*r*3.8)*vDetail.y*.65);
+    return;
+  }
+  color = vec4(lit, (solid+glow)*min(1.0,vDetail.y*(1.0+band*.20)));
+}`;
+const connectionFragment = GLSL + `
+uniform float uTime;
+in vec3 vWorld;
+in vec3 vNormal;
+in vec3 vColor;
+in vec3 vDetail;
+in vec3 vViewPosition;
+out vec4 color;
+void main() {
+  vec3 n = normalize(vNormal);
+  vec3 eye = normalize(-vViewPosition);
+  if(dot(n,eye)<0.0) n=-n;
+  float light=max(dot(n,normalize(vec3(-.51,.73,.46))),0.0);
+  float rim=pow(1.0-max(dot(n,eye),0.0),2.0);
+  float u=vDetail.x, v=vDetail.y;
+  float edge=smoothstep(0.0,.13,u)*(1.0-smoothstep(.83,1.0,u));
+  edge*=smoothstep(0.0,.13,v)*(1.0-smoothstep(.87,1.0,v));
+  float variation=.78+.10*sin(v*17.0+u*9.0+vDetail.z)+.12*sin(v*53.0+u*12.0);
+  float flow=pow(.5+.5*sin(u*7.5+v*1.8+vDetail.z*.17-uTime*.75),10.0);
+  vec3 blue=vec3(.065,.17,.295)*(.32+.85*light+.55*rim);
+  blue+=vec3(.035,.115,.22)*flow*(.25+.75*rim);
+  float roll=exp(-pow((u-.87)/.105,2.0));
+  float center=1.0-smoothstep(.18,1.0,length(vWorld.xz));
+  blue += vec3(.060,.145,.20)*roll*(.35+.65*light)*(.72+.28*flow);
+  blue += vec3(.014,.036,.055)*center;
+  if(vDetail.z < -5.0) {
+    float vein=exp(-pow((v-.5)/.025,2.0));
+    blue=vColor*(.18+.35*light)+vec3(.025,.048,.080)*vein;
+    color=vec4(blue,.78);
+  } else {
+    color=vec4(blue,edge*variation*.91);
+  }
+}`;
+const sphereVertex = GLSL + `
+layout(location=0) in vec3 aPosition;
+uniform mat4 uView;
+uniform mat4 uProjection;
+out vec3 vObject;
+out vec3 vNormal;
+out vec3 vEye;
+void main() {
+  vec4 view = uView * vec4(aPosition,1);
+  gl_Position = uProjection * view;
+  vObject = aPosition;
+  vNormal = mat3(uView) * aPosition;
+  vEye = -view.xyz;
+}`;
+const sphereFragment = GLSL + `
+in vec3 vObject;
+in vec3 vNormal;
+in vec3 vEye;
+out vec4 color;
+float hash(vec3 p) {
+  return fract(sin(dot(p,vec3(129.7,331.8,72.52)))*43758.54);
+}
+float noise(vec3 p) {
+  vec3 i = floor(p), f = fract(p);
+  f = f*f*(3.0-2.0*f);
+  return mix(mix(mix(hash(i),hash(i+vec3(1,0,0)),f.x),
+                 mix(hash(i+vec3(0,1,0)),hash(i+vec3(1,1,0)),f.x),f.y),
+             mix(mix(hash(i+vec3(0,0,1)),hash(i+vec3(1,0,1)),f.x),
+                 mix(hash(i+vec3(0,1,1)),hash(i+vec3(1,1,1)),f.x),f.y),f.z);
+}
+void main() {
+  vec3 n = normalize(vNormal), eye = normalize(vEye);
+  vec3 light = normalize(vec3(-.47,.66,.63));
+  vec3 halfLight = normalize(light+eye);
+  float diffuse = max(dot(n,light),0.0);
+  float fill = max(dot(n,normalize(vec3(.87,-.25,.24))),0.0);
+  float facing = max(dot(n,eye),0.0);
+  float broad = pow(max(dot(n,halfLight),0.0),14.0);
+  float highlight = pow(max(dot(n,halfLight),0.0),54.0);
+  float rim = pow(1.0-facing,5.0) * (.21+.79*max(dot(n,normalize(vec3(.58,.46,-.25))),0.0));
+  float mottling = noise(vObject*11.0) - .5;
+  float grain = noise(vObject*85.0) - .5;
+  vec3 blue = vec3(.19,.32,.46) + mottling*vec3(.031,.048,.069);
+  vec3 lit = blue*(.36+diffuse*.97+fill*.27+grain*.16);
+  lit += broad*vec3(.19,.28,.40) + highlight*vec3(.20,.28,.33) + rim*vec3(.24,.43,.62);
+  color = vec4(lit,1.0);
+}`;
+
+const presets = {
+  face: {yaw: -.85, pitch: 1.47},
+  angle: {yaw: -.85, pitch: .51},
+  side: {yaw: -.85, pitch: .10}
+};
+const camera = {...presets.angle, zoom: 1.12};
+const particleCamera = {yaw: -.85, pitch: .25, zoom: 1};
+const pointers = new Map();
+const settings = {sample: false, bloom: 0};
+let currentView = 'angle';
+let gl, programs, emptyVao, roseGrains, connections, sphere;
+let needsDraw = true;
+let lastDraw = 0;
+let previousTime = performance.now();
+let animation = 0;
+let artworkTime = 0;
+let motionPaused = false;
+let clockTick = performance.now();
+const motionButton = document.querySelector('#motion');
+motionButton.addEventListener('click', () => {
+  motionPaused = !motionPaused;
+  motionButton.textContent = motionPaused ? '继续流光' : '暂停流光';
+  motionButton.setAttribute('aria-pressed', String(motionPaused));
+  needsDraw = true;
+});
+let shownError = false;
+
+function createProgram(vertex, fragment, uniformNames) {
+  const shaders = [[gl.VERTEX_SHADER,vertex],[gl.FRAGMENT_SHADER,fragment]].map(([type, source]) => {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader,source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader,gl.COMPILE_STATUS)) throw Error(gl.getShaderInfoLog(shader));
+    return shader;
+  });
+  const program = gl.createProgram();
+  for (const shader of shaders) gl.attachShader(program,shader);
+  gl.linkProgram(program);
+  for (const shader of shaders) gl.deleteShader(shader);
+  if (!gl.getProgramParameter(program,gl.LINK_STATUS)) throw Error(gl.getProgramInfoLog(program));
+  return {program, u: Object.fromEntries(uniformNames.map(name => [name,gl.getUniformLocation(program,name)]))};
+}
+
+function upload(data, layout, existing) {
+  const geometry = existing ?? {vao:gl.createVertexArray(), buffer:gl.createBuffer()};
+  const stride = layout.reduce((sum, size) => sum + size, 0);
+  gl.bindVertexArray(geometry.vao);
+  gl.bindBuffer(gl.ARRAY_BUFFER,geometry.buffer);
+  gl.bufferData(gl.ARRAY_BUFFER,data,gl.STATIC_DRAW);
+  let offset = 0;
+  for (const [index,size] of layout.entries()) {
+    gl.enableVertexAttribArray(index);
+    gl.vertexAttribPointer(index,size,gl.FLOAT,false,stride*4,offset*4);
+    offset += size;
+  }
+  geometry.count = data.length / stride;
+  return geometry;
+}
+
+function setBloom(bloom) {
+  settings.bloom = bloom;
+  connections = upload(makeConnections(bloom),[3,3,3,3],connections);
+  const grains = makeRose(bloom);
+  roseGrains = upload(grains,grainLayout,roseGrains);
+  if (!roseGrains.indexBuffer) {
+    Object.assign(roseGrains, {
+      indexBuffer: gl.createBuffer(),
+      bins: new Uint8Array(roseGrains.count),
+      counts: new Uint32Array(depthBins),
+      order: new Uint16Array(roseGrains.count),
+      axis: new Float32Array(3)
+    });
+  }
+  roseGrains.data = grains;
+  roseGrains.needsOrder = true;
+  for (const button of bloomButtons) button.setAttribute('aria-pressed', Number(button.dataset.bloom) === bloom);
+  needsDraw = true;
+}
+
+function lookAt(eye, target) {
+  const back = normalize(subtract(eye,target));
+  const right = normalize(cross([0,1,0],back));
+  const up = cross(back,right);
+  return new Float32Array([
+    right[0],up[0],back[0],0, right[1],up[1],back[1],0, right[2],up[2],back[2],0,
+    -dot(right,eye),-dot(up,eye),-dot(back,eye),1
+  ]);
+}
+
+function projection(aspect) {
+  const focal = 1 / Math.tan(.70 / 2);
+  const near = .025;
+  const far = 120;
+  return new Float32Array([
+    focal/aspect,0,0,0, 0,focal,0,0, 0,-.06,(far+near)/(near-far),-1, 0,0,(2*far*near)/(near-far),0
+  ]);
+}
+
+function orbitView(pose,distance,target) {
+  const horizontal = Math.cos(pose.pitch) * distance;
+  return lookAt([target[0] + Math.cos(pose.yaw)*horizontal, target[1]+Math.sin(pose.pitch)*distance,
+    target[2]+Math.sin(pose.yaw)*horizontal],target);
+}
+
+function use(entry, view, proj) {
+  gl.useProgram(entry.program);
+  gl.uniform1f(entry.u.uTime,artworkTime);
+  gl.uniformMatrix4fv(entry.u.uView,false,view);
+  gl.uniformMatrix4fv(entry.u.uProjection,false,proj);
+}
+
+function render(now) {
+  animation = requestAnimationFrame(render);
+  const elapsed = Math.max(0, Math.min((now-clockTick)/1000,.1));
+  clockTick = now;
+  if(!motionPaused && !document.hidden && !matchMedia('(prefers-reduced-motion: reduce)').matches) artworkTime += elapsed;
+  if (document.hidden || (!needsDraw && now-lastDraw < 30)) return;
+  const ratio = Math.min(devicePixelRatio || 1, 1.7);
+  const width = Math.round(canvas.clientWidth * ratio);
+  const height = Math.round(canvas.clientHeight * ratio);
+  if (!width || !height) return;
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+  const aspect = width/height;
+  const mobileFactor = Math.max(1, .83/aspect);
+  const roseDistance = (9.65 + (1-settings.bloom)*.17) * mobileFactor / camera.zoom;
+  const sampleDistance = 13.6 / particleCamera.zoom;
+  const pose = settings.sample ? particleCamera : camera;
+  const view = settings.sample ? orbitView(pose,sampleDistance,[0,0,0]) : orbitView(pose,roseDistance,[0,-.10,0]);
+  const proj = projection(aspect);
+  gl.viewport(0,0,width,height);
+  gl.disable(gl.DEPTH_TEST);
+  gl.disable(gl.BLEND);
+  gl.useProgram(programs.backdrop.program);
+  gl.bindVertexArray(emptyVao);
+  gl.uniform2f(programs.backdrop.u.uResolution,width,height);
+  gl.uniform2f(programs.backdrop.u.uOrbit,pose.yaw,pose.pitch);
+  gl.uniform1f(programs.backdrop.u.uTime,artworkTime);
+  gl.uniform1f(programs.backdrop.u.uSample,Number(settings.sample));
+  gl.uniform1f(programs.backdrop.u.uSampleRadius,proj[5]*.5/Math.sqrt(sampleDistance**2-1));
+  gl.drawArrays(gl.TRIANGLES,0,3);
+
+  gl.enable(gl.DEPTH_TEST);
+  gl.clear(gl.DEPTH_BUFFER_BIT);
+  if (settings.sample) {
+    use(programs.sphere,view,proj);
+    gl.bindVertexArray(sphere.vao);
+    gl.drawArrays(gl.TRIANGLES,0,sphere.count);
+  } else {
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+    use(programs.connection,view,proj);
+    gl.bindVertexArray(connections.vao);
+    gl.drawArrays(gl.TRIANGLES,0,connections.count);
+    // The dim connecting volume supports the luminous grains.
+    gl.enable(gl.DEPTH_TEST);
+    gl.depthMask(false);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);
+    use(programs.grain,view,proj);
+    gl.uniform1f(programs.grain.u.uFocal,proj[5]*height*.5);
+    gl.uniform1f(programs.grain.u.uMinPoint,2.5*ratio);
+    gl.uniform1f(programs.grain.u.uMaxPoint,19*ratio);
+    gl.bindVertexArray(roseGrains.vao);
+    orderGrains(roseGrains,view);
+    gl.drawElements(gl.POINTS,roseGrains.count,gl.UNSIGNED_SHORT,0);
+    gl.depthMask(true);
+  }
+  lastDraw = now;
+  needsDraw = false;
+}
+
+function setView(view) {
+  currentView = view;
+  for (const button of viewButtons) button.setAttribute('aria-pressed',button.dataset.view === currentView);
+  if (view) {
+    Object.assign(camera,presets[view]);
+    camera.zoom = 1;
+    updateZoomButtons();
+  }
+  needsDraw = true;
+}
+
+function toggleSample() {
+  settings.sample = !settings.sample;
+  sampleButton.setAttribute('aria-pressed',settings.sample);
+  sampleButton.querySelector('span').textContent = settings.sample ? '返回玫瑰' : '粒子近景';
+  document.querySelector('#states').hidden = settings.sample;
+  document.querySelector('#views').hidden = settings.sample;
+  canvas.setAttribute('aria-label', (settings.sample ? '三维粒子样品' : '三维蓝玫瑰') + '，拖动或按方向键旋转，滚轮、双指或加减键缩放');
+  updateZoomButtons();
+  needsDraw = true;
+}
+
+function zoomBounds() {
+  return settings.sample ? [.72,1.25] : [.72,2.12];
+}
+
+function updateZoomButtons() {
+  const {zoom} = settings.sample ? particleCamera : camera;
+  const [min,max] = zoomBounds();
+  document.querySelector('#zoom-out').disabled = zoom <= min;
+  document.querySelector('#zoom-in').disabled = zoom >= max;
+}
+
+function zoomBy(delta) {
+  const pose = settings.sample ? particleCamera : camera;
+  const [min,max] = zoomBounds();
+  const damping = delta > 0 ? mix(1,.38,smooth(1,max,pose.zoom)) : 1;
+  pose.zoom = clamp(pose.zoom * Math.exp(delta*damping),min,max);
+  updateZoomButtons();
+  needsDraw = true;
+}
+
+function turnBy(x,y) {
+  const pose = settings.sample ? particleCamera : camera;
+  pose.yaw -= x;
+  pose.pitch = clamp(pose.pitch+y,-1.47,1.53);
+  if (!settings.sample && currentView) setView(null);
+  needsDraw = true;
+}
+
+canvas.addEventListener('pointerdown', event => {
+  if (event.button !== 0 || pointers.size >= 2) return;
+  canvas.setPointerCapture(event.pointerId);
+  pointers.set(event.pointerId, [event.clientX,event.clientY]);
+});
+canvas.addEventListener('pointermove', event => {
+  if (!pointers.has(event.pointerId)) return;
+  const before = [...pointers.values()];
+  const old = pointers.get(event.pointerId);
+  pointers.set(event.pointerId,[event.clientX,event.clientY]);
+  if (pointers.size === 2) {
+    const after = [...pointers.values()];
+    const previous = Math.hypot(...subtract(before[0],before[1]));
+    const next = Math.hypot(...subtract(after[0],after[1]));
+    if (previous > 5 && next > 5) zoomBy(Math.log(next/previous));
+  } else {
+    turnBy((event.clientX-old[0])*.006, (event.clientY-old[1])*.006);
+  }
+});
+for (const type of ['pointerup','pointercancel','lostpointercapture']) {
+  canvas.addEventListener(type,event => pointers.delete(event.pointerId));
+}
+canvas.addEventListener('wheel', event => {
+  event.preventDefault();
+  const units = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? canvas.clientHeight : 1;
+  zoomBy(clamp(-event.deltaY*units*.0014,-.34,.34));
+},{passive:false});
+canvas.addEventListener('keydown', event => {
+  const actions = {
+    ArrowLeft: () => turnBy(-.15,0), ArrowRight: () => turnBy(.15,0),
+    ArrowUp: () => turnBy(0,.15), ArrowDown: () => turnBy(0,-.15),
+    '+': () => zoomBy(.19), '=': () => zoomBy(.19), '-': () => zoomBy(-.19)
+  };
+  if (!Object.hasOwn(actions,event.key)) return;
+  event.preventDefault();
+  actions[event.key]();
+});
+sampleButton.addEventListener('click',toggleSample);
+for (const button of bloomButtons) button.addEventListener('click',() => {
+  const bloom = Number(button.dataset.bloom);
+  if (settings.bloom !== bloom) setBloom(bloom);
+});
+for (const button of viewButtons) button.addEventListener('click',() => setView(button.dataset.view));
+document.querySelector('#zoom-in').addEventListener('click',() => zoomBy(.20));
+document.querySelector('#zoom-out').addEventListener('click',() => zoomBy(-.20));
+document.querySelector('#retry').addEventListener('click',() => location.reload());
+window.addEventListener('resize',() => { needsDraw = true; });
+
+function showError(message) {
+  if (shownError) return;
+  shownError = true;
+  cancelAnimationFrame(animation);
+  document.querySelector('#error-text').textContent = message;
+  document.querySelector('#error').hidden = false;
+  document.querySelector('.footer').hidden = true;
+  sampleButton.hidden = true;
+  canvas.tabIndex = -1;
+}
+
+function initialize() {
+  gl = canvas.getContext('webgl2',{alpha:false, antialias:true});
+  if (!gl) {
+    showError('当前浏览器未能启动 3D 画面。请启用硬件加速后重新加载，或换用支持 WebGL 2 的浏览器。');
+    return;
+  }
+  const roseUniforms = ['uView','uProjection','uFocal','uMinPoint','uMaxPoint','uTime'];
+  programs = {
+    backdrop: createProgram(backdropVertex,backdropFragment,['uResolution','uOrbit','uTime','uSample','uSampleRadius']),
+    connection: createProgram(roseVertex,connectionFragment,roseUniforms),
+    grain: createProgram(roseVertex,grainFragment,roseUniforms),
+    sphere: createProgram(sphereVertex,sphereFragment,['uView','uProjection'])
+  };
+  emptyVao = gl.createVertexArray();
+  sphere = upload(makeSphere(),[3]);
+  setBloom(settings.bloom);
+  updateZoomButtons();
+  render(performance.now());
+}
+
+canvas.addEventListener('webglcontextlost',event => {
+  event.preventDefault();
+  showError('3D 画面已暂停。重新加载即可恢复。');
+});
+
+try {
+  initialize();
+} catch (error) {
+  console.error(error);
+  showError('3D 画面加载失败。请重新加载。');
+}
+</script>
+</body>
+</html>
