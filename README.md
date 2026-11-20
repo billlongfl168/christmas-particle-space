@@ -4,6 +4,14 @@
 
 Explore a particle Christmas tree with your hands. Open its hanging gifts to enter five miniature particle worlds.
 
+## 在线体验 / Live Demo
+
+**[点击体验圣诞树 / Open the Christmas Tree](https://billlongfl168.github.io/christmas-particle-space/)**
+
+直接用现代浏览器打开即可，无需安装 Python、下载代码或注册 GitHub。使用手势时，点击开启摄像头并允许访问。
+
+Open the link in a modern browser. No Python installation, source download or GitHub account is required. To use gestures, enable the camera and grant permission.
+
 ## 项目介绍 / Overview
 
 这是一个基于浏览器的交互式 3D 圣诞艺术项目。松针、树干、灯光、礼盒和场景物体通过粒子呈现，结合摄像头手部识别，支持旋转、缩放、开启礼盒和场景切换。
@@ -25,8 +33,8 @@ Built with static HTML and native JavaScript modules; no npm installation or bui
 
 ## 本地运行 / Run Locally
 
-需要 Python 3，以及支持 WebGL 和摄像头访问的现代浏览器。  
-You need Python 3 and a modern browser with WebGL and camera support.
+仅在需要下载代码并在自己的电脑上运行或修改时，使用以下步骤。在线体验无需这些准备。项目本身不依赖 Python；下面仅用 Python 3 启动本地 HTTP 服务器，也可使用其他静态文件服务器。浏览器需支持 WebGL；手势操作需要摄像头权限。  
+Follow these steps only to run or modify the downloaded source on your own computer. They are not needed for the live demo. The project itself does not depend on Python; Python 3 is used below only to start a local HTTP server and can be replaced with another static file server. Use a WebGL-capable browser and grant camera permission for gestures.
 
 ```bash
 git clone https://github.com/billlongfl168/christmas-particle-space.git
