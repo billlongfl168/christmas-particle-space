@@ -1,97 +1,119 @@
-# 粒子艺术空间 · Particle Art Space
+# 圣诞 · 粒子空间 / Christmas Particle Space
 
-一个持续迭代的浏览器 3D 粒子艺术项目，收录圣诞粒子空间与碎冰蓝玫瑰两个独立体验。
+用双手探索一棵粒子圣诞树，打开挂在树上的礼盒，进入五个微缩粒子世界。
 
-> 蓝玫瑰目前是视觉原型。摄像头手势、连续开合、整体崩散与回聚尚未在玫瑰页面实现；不要把开发计划当作现有功能。
+Explore a particle Christmas tree with your hands. Open its hanging gifts to enter five miniature particle worlds.
 
-## 项目入口
+## 项目介绍 / Overview
 
-| 体验 | 入口文件 | 当前实现 |
-| --- | --- | --- |
-| 圣诞粒子空间 | [index.html](index.html) | 粒子圣诞树、礼盒世界、摄像头手部识别与场景交互 |
-| 圣诞独立入口 | [immersive.html](immersive.html) | 与原有主页保持一致的入口 |
-| 蓝色粒子玫瑰 | [blue-rose/index.html](blue-rose/index.html) | 有茎叶的蓝玫瑰、三种静态开放形态、旋转缩放、流光与逸散碎屑 |
+这是一个基于浏览器的交互式 3D 圣诞艺术项目。松针、树干、灯光、礼盒和场景物体通过粒子呈现，结合摄像头手部识别，支持旋转、缩放、开启礼盒和场景切换。
 
-上面的 HTML 链接在 GitHub 文件页中显示源码。运行体验请按下面的方法启动本地服务器。
+A browser-based interactive 3D Christmas artwork. Particles form the tree, lights, gifts and scene objects. Camera-based hand tracking supports rotation, zoom, gift opening and transitions between worlds.
 
-## 本地运行
+项目采用静态 HTML 与原生 JavaScript 模块，无需 npm 安装或构建。  
+Built with static HTML and native JavaScript modules; no npm installation or build step is required.
 
-安装 Python 3 后，在仓库目录运行：
+## 五个礼盒世界 / Five Gift Worlds
+
+| 世界 / World | 内容 / Contents |
+| --- | --- |
+| 星光 / Starlight | 立体星形粒子与环绕光流 / A dimensional particle star with orbiting streams |
+| 雪村 / Snow Village | 木屋、铁轨、行驶的小火车和摇摇木马 / Cabins, railway tracks, a moving train and a rocking horse |
+| 雪林 / Snow Forest | 雪树、球形粒子罩、冰枝和飘雪 / A snowy tree, spherical particle shell, icy branches and drifting snow |
+| 钟楼 / Bell Tower | 双钟、钟锤摆动及冲击光环 / Twin bells, swinging clappers and expanding impact rings |
+| 极光山谷 / Aurora Valley | 波动的极光帘、山脊和森林 / Flowing aurora curtains, mountain ridges and trees |
+
+## 本地运行 / Run Locally
+
+需要 Python 3，以及支持 WebGL 和摄像头访问的现代浏览器。  
+You need Python 3 and a modern browser with WebGL and camera support.
 
 ```bash
+git clone https://github.com/billlongfl168/christmas-particle-space.git
+cd christmas-particle-space
 python3 -m http.server 8000
 ```
 
-打开：
+打开 / Open: **http://localhost:8000/**
 
-- 圣诞空间：<http://localhost:8000/>
-- 蓝玫瑰：<http://localhost:8000/blue-rose/>
+请通过 HTTP 服务器打开，不要直接双击 HTML：页面需要加载 JavaScript 模块、WASM 和手部识别模型。  
+Use the HTTP server rather than opening the HTML file directly: the app loads JavaScript modules, WASM and a hand-tracking model.
 
-不需要 npm 安装或构建。蓝玫瑰也可直接用支持 WebGL 2 的浏览器打开 `blue-rose/index.html`；圣诞页面使用 JavaScript 模块，建议通过服务器访问。
+本地摄像头使用 localhost；远程托管时请使用 HTTPS 并允许摄像头权限。  
+Use localhost for local camera access. Remote hosting requires HTTPS and camera permission.
 
-摄像头体验需要允许浏览器访问摄像头；本地使用 localhost，远程托管应使用 HTTPS。源码公开不代表已经完成或验证了网站部署。
+## 操作说明 / Controls
 
-## 蓝玫瑰操作
+先点击 **开启摄像头**，允许访问摄像头，让整只手进入画面，并先张开拇指和食指，再进行捏合。手势效果可能受光照、遮挡、设备和浏览器影响。
 
-| 操作 | 方法 |
+Click **开启摄像头 (Enable camera)** and grant camera access. Keep your whole hand in view, separating your thumb and index finger before pinching. Tracking quality depends on lighting, occlusion, device and browser.
+
+| 操作 / Action | 方法 / Gesture |
 | --- | --- |
-| 旋转 | 鼠标拖动、单指拖动；画布获得焦点后使用方向键 |
-| 缩放 | 滚轮、双指缩放、页面加减按钮或键盘加减键 |
-| 形态 | 点击「初绽」「半开」「盛开」 |
-| 视角 | 点击「正面」「斜侧」「侧面」 |
-| 粒子材质 | 点击「粒子近景」，再次点击返回 |
-| 暂停动态 | 点击「暂停流光」，点击「继续流光」恢复 |
+| 旋转 / Rotate | 对准主体，拇指与食指捏合后拖动；张开手掌左右移动也可带动水平旋转。/ Aim at the subject, pinch and drag. Moving an open palm sideways can also rotate it horizontally. |
+| 缩放 / Zoom | 未抓取物体时，逐渐张开或收拢手掌。/ Gradually open or close your hand while not grabbing an object. |
+| 锁定缩放 / Lock zoom | 点击右下方锁形按钮，或用手指对准后捏合。/ Click the lock button near the bottom right, or aim at it and pinch. |
+| 打开礼盒 / Open a gift | 对准礼盒，快速完成两次捏合并松开，礼盒会打开并进入对应世界。/ Aim at a gift and pinch-release twice in quick succession to open it and enter its world. |
+| 返回圣诞树 / Return to the tree | 在礼盒世界中，对准左下方返回礼盒，再快速捏合并松开两次。/ In a gift world, aim at the return gift near the bottom left and pinch-release twice. |
 
-初始为微开偏半开的花型；最大形态保留包裹感。形态按钮当前直接重建对应状态，尚不构成连续开花动画。
+当前主场景交互以摄像头手势为主；尚未提供完整的鼠标或键盘替代操作。不开摄像头时仍可观看默认圣诞树画面。  
+The main scene currently relies on camera gestures; complete mouse and keyboard alternatives are not implemented. The default tree can still be viewed without enabling the camera.
 
-## 技术组成
+## 技术实现 / Technical Design
 
-- 圣诞空间：Three.js、GLSL 粒子材质、本地手部识别运行时与模型。
-- 蓝玫瑰：原生 WebGL 2、自包含 HTML/CSS/JavaScript，无外部运行依赖。
-- 玫瑰由参数化曲面上的粒子组织成花冠、花茎、花托和叶片，辅以暗色连接曲面表现遮挡与深度。
-- 当前玫瑰约 58,110 个主体粒子与 5,500 个逸散粒子；固定采样种子保持形态稳定。
-- 采用像素比上限、粒子深度排序与减少动态效果偏好处理。
+- **Three.js + GLSL**：粒子几何、着色、深度遮挡和场景渲染。  
+  Particle geometry, shading, depth occlusion and scene rendering.
+- **MediaPipe Hand Landmarker**：加载仓库内模型和运行时，在浏览器中识别手部关键点。  
+  Uses the bundled model and runtime to detect hand landmarks in the browser.
+- **礼盒预览 / Gift previews**：将内部世界渲染到纹理，显示在打开的礼盒内。  
+  Internal worlds are rendered to textures displayed inside opened gifts.
+- **场景过渡 / Scene transitions**：从礼盒预览逐渐扩展到完整世界，并支持返回。  
+  Gift previews expand into full scenes, with a return transition.
+- **性能控制 / Performance controls**：根据屏幕宽度调整部分粒子密度，限制像素比，并依据帧耗时降低渲染分辨率。  
+  Adjusts some particle densities by viewport width, caps pixel ratio and reduces rendering resolution when frame times are high.
 
-## 目录
+## 文件结构 / Project Structure
 
 ```text
-index.html              圣诞空间主页
-immersive.html          圣诞空间备用入口
-immersive.js            场景、摄像头与交互
-christmas-worlds.js      礼盒世界
-particle-art.js          圣诞粒子造型与材质
-model/                  现有第三方运行时、模型与资源
-blue-rose/
-  index.html            完整蓝玫瑰原型
-  README.md             玫瑰开发说明
-  LICENSE               玫瑰原创代码的 MIT 许可证
-docs/
-  BLUE_ROSE_SPEC.md      公开版设计要求与开发路线
+index.html             主入口 / Main entry
+immersive.html         备用入口 / Alternate entry
+immersive.js           场景、摄像头与手势 / Scenes, camera and gestures
+christmas-worlds.js     五个礼盒世界 / Five gift worlds
+particle-art.js        粒子材质与造型 / Particle materials and geometry
+model/                 第三方运行时、模型和 WASM / Third-party runtime, model and WASM
+.nojekyll              静态托管辅助文件 / Static hosting support
+README.md              中英双语说明 / Bilingual documentation
+LICENSE                原创项目代码许可证 / Original project code license
 ```
 
-本次整合保留原有圣诞代码与入口，不将两套渲染实现强行合成同一个运行时。
+## 摄像头与隐私 / Camera and Privacy
 
-## 状态与验证范围
+摄像头仅在点击启用按钮后申请。当前应用源码使用本地模型推理，没有实现录像上传；离开页面时会停止摄像头轨道。这些描述基于应用源码，不代表完整第三方依赖审计。
 
-蓝玫瑰源码来自 2026-11-14 保存的视觉原型。此前进行了几何数据和索引检查、代码导出执行，以及同源着色器的离屏渲染检查；这些不等于完整浏览器、移动端或真人手势测试。
+Camera access is requested only after clicking the enable button. The application source performs local inference and does not implement video uploads. Camera tracks are stopped when leaving the page. This describes the application code, not a full audit of third-party dependencies.
 
-本次整理未验证圣诞空间所有手势，也未重新运行完整浏览器测试。欢迎提交可复现问题，附浏览器、设备、入口页面、操作步骤与实际结果。
+## 常见问题 / Troubleshooting
 
-## 后续计划
+- **摄像头无法启动 / Camera will not start**：检查权限、HTTPS 或 localhost，以及摄像头是否被其他应用占用。  
+  Check permissions, HTTPS or localhost access, and whether another app is using the camera.
+- **手势模型无法加载 / Model fails to load**：确保完整保留 `model/`，并通过本地服务器运行。  
+  Keep the complete `model/` directory and run through a local server.
+- **没有识别到手 / Hand not detected**：增加均匀光照，让整只手入镜，先分开拇指与食指。  
+  Use even lighting, keep the whole hand visible and separate thumb and index finger first.
+- **画面卡顿 / Low frame rate**：关闭其他占用 GPU 的页面，缩小窗口，并确认浏览器硬件加速已开启。  
+  Close other GPU-heavy tabs, reduce window size and check browser hardware acceleration.
 
-1. 打磨玫瑰卷瓣结构、碎冰蓝质感、背景深度与自然逸散。
-2. 通过普通控件实现连续开合，支持中途停留和反向。
-3. 实现可逆整体崩散与回聚，保留崩散前开合程度。
-4. 分项接入摄像头手势并处理模式优先级、丢手与重识别。
-5. 添加立体爱心、太阳与受控的粒子场景过渡。
-6. 完成性能、移动端、可访问性和摄像头不可用时的验证。
+## 开发状态 / Development Status
 
-## 隐私与素材
+这是持续迭代的交互艺术原型。上面的功能说明依据当前仓库源码整理；本次文档更新没有重新执行完整浏览器、移动端或真人手势测试。减少动态效果偏好已用于部分动画，完整的暂停控制和可访问性仍可继续完善。
 
-蓝玫瑰当前不调用摄像头、不发送网络请求。圣诞页在用户点击按钮后申请摄像头，所读源码使用本地模型推理；这不是完整第三方依赖安全审计。
+This is an evolving interactive art prototype. The descriptions above reflect the current repository source. This documentation update did not rerun complete browser, mobile or live hand-tracking tests. Reduced-motion preferences affect some animations; comprehensive pause controls and accessibility remain areas for improvement.
 
-公开目录不包含个人密钥、账号凭据、私有参考录屏或带有个人机器路径的交接记录。
+欢迎提交问题或改进建议，并提供浏览器、设备、复现步骤及预期结果。  
+Issues and improvements are welcome. Please include your browser, device, reproduction steps and expected behavior.
 
-## 许可证
+## 许可证 / License
 
-`blue-rose/` 中本次加入的原创代码采用 [MIT License](blue-rose/LICENSE)。原有圣诞代码及 `model/` 第三方资源未因本次整合而被重新许可；第三方组件仍遵循各自的上游许可证。完整复用或再分发原有组件前，请核对其许可与声明。
+本项目原创代码采用 [MIT License](LICENSE)。`model/` 下的第三方库、模型、WASM 及其他上游资源不因本许可证而被重新许可，仍适用各自上游条款；再分发时请保留并核对相关许可声明。
+
+Original project code is licensed under the [MIT License](LICENSE). Third-party libraries, models, WASM and other upstream assets under `model/` are not relicensed by this license and remain subject to their respective upstream terms. Preserve and verify their license notices when redistributing.
